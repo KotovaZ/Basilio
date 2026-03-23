@@ -3,23 +3,7 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            S                                S    S                                                                          S                                     S
+        S                        S                                 S                        S                        S                        S                        S                        S                        S                        S                        S                        S                        S
 
 
 
@@ -29,23 +13,11 @@
 
 
 
+                                         ffffff
 
 
 
-
-
-
-
-                                                  ffffff
-
-
-
-
-
-
-
-
- ffffffff                     ffffffff
+                      ffffffff                                 ffffffff                                    ffffffff                              ffffffff                                    ffffffff                              ffffffff
 
 
 
@@ -53,75 +25,53 @@
 >
 
 
+                                                              BBBBBB                                                               BBBBBB                                                             BBBBBB
 
-
-
-
-
-
-
-
-
-
-
-                                                  BBBBBB
-
-                     ?                                                                                                                          gg
-                                                  BBBBBB                                      BBBBBBB                                          ggg
-                     c                                                                                                  B*BB?BB               gggg
-   gggg        ?   B*B?B                      P                                           B?B                                                ggggg
-                                      P       p   BBBBBB                                                      P                             gggggg
-                            P         p       p                                                     P         p                            ggggggg
-          m             t   p         p   c   p                                                     p     c   p                     c     gggggggg
-ggggggggggggggggggggggggggggggggggggggggggggggggggggggggg                      gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
-ggggggggggggggggggggggggggggggggggggggggggggggggggggggggg  M      M      M     ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
-ggggggggggggggggggggggggggggggggggggggggggggggggggggggggg                      ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+                     ?                                        BBBBBB     ?                                                         BBBBBB       ?                  ?                                  BBBBBB        ?           ?
+                                                              BBBBBB                           BBBBBBB                             BBBBBB                                        BBBBBBB               BBBBBB                              BBBBBBB
+                     c               B*BB?BB                                                                   c        B*BB?BB                        c                                   c  B*BB?BB                      B*BB?BB
+   gggg        ?   B*B?B                                  P                      B?B                     P              B*B?B                P              B?B                    P         B*B?B               P               B?B
+                                      P       p                                      P     p                              P       p                                P     p                   P       p
+                            P         p       p   c                       P          p     p   c                P         p       p   c              P            p     p   c       P        p       p   c              P          p     p   c
+          m             t   p         p   c   p                       t   p          p         p                       t   p         p                          t p     p       t            p         p                       t   p          p
+ggggggggggggggggggggggggggggggggggggggggggggggggggggggggg                      gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+ggggggggggggggggggggggggggggggggggggggggggggggggggggggggg  M      M      M     ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+ggggggggggggggggggggggggggggggggggggggggggggggggggggggggg                      ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
 {"speed": 1}
 >
 
 
 
+                                                 bbbbbb                                                          bbbbbb                                                         bbbbbb
+                                                  bZZb                                                            bZZb                                                           bZZb
+    bb                                           fbZZbf                     bb                                   fbZZbf                    bb                                   fbZZbf
+   bbbb                                          bbbbbb                    bbbb                                   bbbbbb                   bbbb                                   bbbbbb
+  bbbbbb                                          bZZb                   bbbbbb                                    bZZb                  bbbbbb                                    bZZb
+  bggggb                                         fbZZbf                  bggggb                                   fbZZbf                 bggggb                                   fbZZbf
+  bbZZbb                                         bbbbbb                  bbZZbb                                   bbbbbb                 bbZZbb                                   bbbbbb
+  bbZZbb                                          bZZb                   bbZZbb                                    bZZb                  bbZZbb                                    bZZb
+  bbZZbb                 S                        bZZb                   bbZZbb            S                       bZZb                  bbZZbb            S                       bZZb
 
-
-
-
-
-
-
-
-                                                  bbbbbb
-                                                   bZZb
-    bb                                            fbZZbf
-   bbbb                                           bbbbbb
-  bbbbbb                                           bZZb
-  bggggb                                          fbZZbf
-  bbZZbb                                          bbbbbb
-  bbZZbb                                           bZZb
-  bbZZbb                 S                         bZZb                                     S                                S          S
-
-                                                        WWWWWWWWWWWWWWWWWWWWWWWWWWWW
-                                                        wwwwwwwwwwwwwwwwwwwwwwwwwwww
+                                                       WWWWWWWWWWWWWWWWWWWWWWWWWWWW                                                          WWWWWWWWWWWWWWWWWWWWWWWWWWWW
+                                                       wwwwwwwwwwwwwwwwwwwwwwwwwwww                                                          wwwwwwwwwwwwwwwwwwwwwwwwwwww
 {"speed": 1}
 >
-                                                                C
-        C                                                                                                               C               C
-                                                                                                    C
- C                                                                          C
-                                                                                                                            C
-                        C                                                                                   C
-                                                       C
-                                  C                                                       C
-                C
+                                                               C
+        C                                                                                                                C               C                                         C                                              C               C
+                                                                                                     C                                                                                                    C
+ C                                                                           C                                                  C                                C
+                                                                                                                             C                                                         C
+                        C                                                                                    C                                    C                                                                    C
+                                                        C                                   C
+                                  C                                                        C                                       C                                         C
+                C                                                    C                                            C
                 x
 
 
 
 
-
-
-
-
-
+                                                                                                          C                                C
+                              C                                                       C                                                                  C                                              C
 
 
 
@@ -132,24 +82,15 @@ ggggggggggggggggggggggggggggggggggggggggggggggggggggggggg                      g
 
 
 
-
-
-
-
-
-
-
-
-
-                                 bb
-                                bbbb                                                           dd
-                               bbbbbb                                                         dddd
-                               bZbbZb                                                        dddddd
-                               bbbbbb                                                       dddddddd
-                               bZbbZb                                          dd          dddddddddd
-                               bbbbbb                                         dddd        dddddddddddd
-                               bZbbZb                                        dddddd      ddddddZZdddddd
-                               bbbbbb                                       dddZZddd    dddddddZZddddddd
+                                bb                                                            dd                                              bb                                                              dd
+                               bbbb                                                          dddd                                            bbbb                                                            dddd
+                              bbbbbb                                                        dddddd                                          bbbbbb                                                          dddddd
+                              bZbbZb                                                       dddddddd                                         bZbbZb                                                        dddddddd
+                              bbbbbb                                                      dddddddddd                                        bbbbbb                                                       dddddddddd
+                              bZbbZb                                         dd          dddddddddddd                                       bZbbZb                                       dd             dddddddddddd
+                              bbbbbb                                        dddd        dddddddddddddd                                      bbbbbb                                      dddd           dddddddddddddd
+                              bZbbZb                                       dddddd      ddddddddZZdddddd                                     bZbbZb                                     dddddd         ddddddddZZdddddd
+                              bbbbbb                                      dddZZddd    dddddddddZZddddddd                                   bbbbbb                                    dddZZddd       dddddddddZZddddddd
 
 
 

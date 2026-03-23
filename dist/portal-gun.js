@@ -1,10 +1,8 @@
 (function () {
     'use strict';
 
-    var portals = [null, null]; // [orange, blue]
+    var portals = [null, null];
     var portalNextIndex = 0;
-
-    // Mouse position tracking (in canvas coordinates)
     var mouseCanvas = { x: 640, y: 384 };
     var canvas = null;
 
@@ -18,13 +16,10 @@
         var c = getCanvas();
         if (!c) return;
         var rect = c.getBoundingClientRect();
-        var scaleX = c.width / rect.width;
-        var scaleY = c.height / rect.height;
-        mouseCanvas.x = (e.clientX - rect.left) * scaleX;
-        mouseCanvas.y = (e.clientY - rect.top) * scaleY;
+        mouseCanvas.x = (e.clientX - rect.left) * (c.width / rect.width);
+        mouseCanvas.y = (e.clientY - rect.top) * (c.height / rect.height);
     });
 
-    // Find Mario in any layer
     function getMario() {
         if (!window.game || !window.game.layers) return null;
         for (var i = 0; i < window.game.layers.length; i++) {
@@ -37,10 +32,9 @@
         return null;
     }
 
-    // Draw aiming reticle (crosshair) at mouse position each frame
-    // Injected as a non-trackable overlay object
+    // ───── Aim overlay ─────
     var aimOverlay = null;
-    function createAimOverlay(layerRef) {
+    function ensureAimOverlay(layerRef) {
         if (aimOverlay) return;
         aimOverlay = {
             position: { x: 0, y: 0 },
@@ -49,60 +43,57 @@
             velocity: { x: 0, y: 0 },
             layer: layerRef,
             render: function (ctx) {
+                if (window.game && window.game.paused) return;
                 var mx = mouseCanvas.x;
                 var my = mouseCanvas.y;
-
-                // Determine active portal color for aiming
                 var color = portalNextIndex === 0 ? '#ff6600' : '#0066ff';
-
                 ctx.save();
                 ctx.strokeStyle = color;
                 ctx.lineWidth = 2;
-                ctx.globalAlpha = 0.8;
+                ctx.globalAlpha = 0.85;
                 ctx.shadowColor = color;
-                ctx.shadowBlur = 8;
-
-                // Outer circle
+                ctx.shadowBlur = 10;
                 ctx.beginPath();
-                ctx.arc(mx, my, 16, 0, Math.PI * 2);
+                ctx.arc(mx, my, 14, 0, Math.PI * 2);
                 ctx.stroke();
+                // crosshair
+                [[-22,-10],[ 10, 22]].forEach(function(seg){ ctx.beginPath(); ctx.moveTo(mx+seg[0], my); ctx.lineTo(mx+seg[1], my); ctx.stroke(); });
+                [[-22,-10],[ 10, 22]].forEach(function(seg){ ctx.beginPath(); ctx.moveTo(mx, my+seg[0]); ctx.lineTo(mx, my+seg[1]); ctx.stroke(); });
 
-                // Cross lines
-                ctx.beginPath();
-                ctx.moveTo(mx - 22, my);
-                ctx.lineTo(mx - 10, my);
-                ctx.moveTo(mx + 10, my);
-                ctx.lineTo(mx + 22, my);
-                ctx.moveTo(mx, my - 22);
-                ctx.lineTo(mx, my - 10);
-                ctx.moveTo(mx, my + 10);
-                ctx.lineTo(mx, my + 22);
-                ctx.stroke();
-
+                // Draw a line from Mario to mouse
+                var mario = getMario();
+                if (mario) {
+                    var msx = mario.position.x + mario.body.width / 2 + window.camera.x;
+                    var msy = 768 - mario.position.y - mario.body.height / 2;
+                    ctx.globalAlpha = 0.2;
+                    ctx.setLineDash([6, 6]);
+                    ctx.beginPath();
+                    ctx.moveTo(msx, msy);
+                    ctx.lineTo(mx, my);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
                 ctx.restore();
             }
         };
         layerRef.addObject(aimOverlay);
     }
 
-    // Create a stationary portal ring
-    function createPortal(pos, angle, idx, layerRef) {
+    // ───── Portal ring ─────
+    function createPortal(pos, hitAngle, idx, layerRef) {
         var cooldown = 0;
-
-        // Portal orientation: vertical (on walls) vs horizontal (on floor/ceiling)
-        // angle: 0=floor, 180=ceiling, 90=right wall, 270=left wall
-        // For floor/ceiling: wide ellipse. For walls: tall ellipse.
-        var isHorizontal = (angle === 0 || angle === 180);
-        var pW = isHorizontal ? 48 : 16;
-        var pH = isHorizontal ? 16 : 48;
+        // hitAngle: 180=floor, 0=ceiling, 90=right wall, 270=left wall
+        var onFloorOrCeiling = (hitAngle === 180 || hitAngle === 0);
+        var pW = onFloorOrCeiling ? 48 : 16;
+        var pH = onFloorOrCeiling ? 16 : 48;
 
         var portal = {
             position: { x: pos.x - pW / 2, y: pos.y - pH / 2 },
             body: { width: pW, height: pH },
             trackable: false,
-            layer: layerRef,
             velocity: { x: 0, y: 0 },
-            _setCooldown: null,
+            layer: layerRef,
+            _setCooldown: function (v) { cooldown = v; },
             render: function (ctx) {
                 var color = idx === 0 ? '#ff6600' : '#0066ff';
                 var cx = portal.position.x + pW / 2 + window.camera.x;
@@ -112,59 +103,57 @@
                 ctx.strokeStyle = color;
                 ctx.lineWidth = 5;
                 ctx.shadowColor = color;
-                ctx.shadowBlur = 20;
+                ctx.shadowBlur = 22;
                 ctx.beginPath();
                 ctx.ellipse(cx, cy, pW / 2, pH / 2, 0, 0, Math.PI * 2);
                 ctx.stroke();
+                // Inner glow
+                ctx.globalAlpha = 0.25;
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.ellipse(cx, cy, pW / 2 - 2, pH / 2 - 2, 0, 0, Math.PI * 2);
+                ctx.fill();
                 ctx.restore();
 
                 if (cooldown > 0) { cooldown--; return; }
 
                 var other = portals[1 - idx];
                 if (!other) return;
-
                 var mario = getMario();
                 if (!mario) return;
 
                 var mx = mario.position.x, my = mario.position.y;
-                var mw = mario.body.width, mh = mario.body.height;
                 var px = portal.position.x, py = portal.position.y;
 
-                if (mx < px + pW && mx + mw > px && my < py + pH && my + mh > py) {
-                    mario.position.x = other.position.x + other.body.width / 2 - mw / 2;
-                    mario.position.y = other.position.y + other.body.height;
+                if (mx < px + pW && mx + mario.body.width > px &&
+                    my < py + pH && my + mario.body.height > py) {
+                    mario.position.x = other.position.x + other.body.width / 2 - mario.body.width / 2;
+                    mario.position.y = other.position.y + other.body.height + 2;
                     mario.velocity.y = 0;
                     cooldown = 60;
                     if (other._setCooldown) other._setCooldown(60);
                 }
             }
         };
-
-        portal._setCooldown = function (v) { cooldown = v; };
         portals[idx] = portal;
         return portal;
     }
 
-    // Create a flying portal bullet aimed toward mouse position
-    function createBullet(startPos, dirX, dirY, speed, idx, layerRef) {
+    // ───── Portal bullet ─────
+    function createBullet(worldX, worldY, ndx, ndy, speed, idx, layerRef) {
+        // ndx, ndy — normalized direction in GAME world coords (Y-up)
         var maxFrames = 300;
         var frame = 0;
         var placed = false;
 
-        // Normalize direction
-        var len = Math.sqrt(dirX * dirX + dirY * dirY) || 1;
-        dirX /= len;
-        dirY /= len;
-
         var bullet = {
-            position: { x: startPos.x, y: startPos.y },
+            position: { x: worldX, y: worldY },
             body: { width: 10, height: 10 },
             trackable: true,
-            velocity: { x: dirX * speed / 60, y: -dirY * speed / 60 }, // game Y is flipped
+            // Initial velocity; X will also be applied by game loop — we compensate
+            velocity: { x: 0, y: 0 },
             layer: layerRef,
             collisions: {},
-            _dirX: dirX,
-            _dirY: dirY,
             clearCollisions: function () { bullet.collisions = {}; },
             setCollision: function (angle, elem) {
                 if (!bullet.collisions[angle]) bullet.collisions[angle] = [];
@@ -172,46 +161,51 @@
             },
             getAABB: function () {
                 return {
-                    min: {
-                        x: bullet.position.x + bullet.velocity.x,
-                        y: bullet.position.y + bullet.velocity.y
-                    },
-                    max: {
-                        x: bullet.position.x + bullet.body.width + bullet.velocity.x,
-                        y: bullet.position.y + bullet.body.height
-                    }
+                    min: { x: bullet.position.x + bullet.velocity.x, y: bullet.position.y + bullet.velocity.y },
+                    max: { x: bullet.position.x + bullet.body.width + bullet.velocity.x, y: bullet.position.y + bullet.body.height }
                 };
             },
             render: function (ctx) {
                 if (placed) return;
                 frame++;
 
-                var hitWall = bullet.collisions[90] || bullet.collisions[270];
-                var hitFloor = bullet.collisions[180];
-                var hitCeiling = bullet.collisions[0];
-                var hit = hitWall || hitFloor || hitCeiling;
+                // ── KEY FIX: game loop only does position.x += velocity.x for non-gravity objects.
+                // We must manually advance Y ourselves here.
+                var fr = window.framerate || 60;
+                var vx = ndx * speed / fr;
+                var vy = ndy * speed / fr;
+
+                // Update Y ourselves (game loop handles X via `position.x += velocity.x`)
+                bullet.position.y += vy;
+
+                // Set velocity so game loop will move X (and collision AABB is accurate)
+                bullet.velocity.x = vx;
+                bullet.velocity.y = vy;
+
+                // Check collisions
+                var hitFloor   = !!bullet.collisions[180];
+                var hitCeiling = !!bullet.collisions[0];
+                var hitRight   = !!bullet.collisions[90];
+                var hitLeft    = !!bullet.collisions[270];
+                var hit = hitFloor || hitCeiling || hitRight || hitLeft;
 
                 if (hit || frame > maxFrames) {
                     placed = true;
-                    var angle = hitFloor ? 0 : hitCeiling ? 180 : hitWall === bullet.collisions[90] ? 90 : 270;
-                    if (hit) doPlace(angle); else doPlace(0);
+                    var angle = hitFloor ? 180 : hitCeiling ? 0 : hitRight ? 90 : 270;
+                    doPlace(angle);
                     return;
                 }
-
-                var fr = window.framerate || 60;
-                bullet.velocity.x = dirX * speed / fr;
-                bullet.velocity.y = -dirY * speed / fr; // game Y inverted
 
                 var color = idx === 0 ? '#ff6600' : '#0066ff';
                 ctx.save();
                 ctx.beginPath();
                 ctx.fillStyle = color;
                 ctx.shadowColor = color;
-                ctx.shadowBlur = 10;
+                ctx.shadowBlur = 12;
                 ctx.arc(
-                    bullet.position.x + bullet.body.width / 2 + window.camera.x,
-                    768 - bullet.position.y - bullet.body.height / 2,
-                    bullet.body.width / 2, 0, Math.PI * 2
+                    bullet.position.x + 5 + window.camera.x,
+                    768 - bullet.position.y - 5,
+                    5, 0, Math.PI * 2
                 );
                 ctx.fill();
                 ctx.restore();
@@ -223,12 +217,9 @@
                 portals[idx].layer.deleteObject(portals[idx]);
             }
             portals[idx] = null;
-
             var portal = createPortal(
-                { x: bullet.position.x + bullet.body.width / 2, y: bullet.position.y + bullet.body.height / 2 },
-                angle,
-                idx,
-                layerRef
+                { x: bullet.position.x + 5, y: bullet.position.y + 5 },
+                angle, idx, layerRef
             );
             layerRef.addObject(portal);
             layerRef.deleteObject(bullet);
@@ -237,46 +228,43 @@
         return bullet;
     }
 
-    // Fire a portal bullet toward the mouse cursor
+    // ───── Fire ─────
     function firePortal() {
         var mario = getMario();
         if (!mario || !mario.layer) return;
-
         var c = getCanvas();
         if (!c) return;
 
-        // Mario screen position
-        var marioScreenX = mario.position.x + mario.body.width / 2 + window.camera.x;
-        var marioScreenY = 768 - mario.position.y - mario.body.height / 2;
+        // Mario center in screen coords
+        var msx = mario.position.x + mario.body.width / 2 + window.camera.x;
+        var msy = 768 - mario.position.y - mario.body.height / 2;
 
-        // Direction from Mario to mouse (in canvas pixels)
-        var dx = mouseCanvas.x - marioScreenX;
-        var dy = mouseCanvas.y - marioScreenY;
+        // Screen-space direction to mouse
+        var dx = mouseCanvas.x - msx;
+        var dy = mouseCanvas.y - msy; // positive = downward on screen
+
+        // Convert to game-world direction (flip Y: screen down = game down = negative Y)
+        var worldDirX =  dx;
+        var worldDirY = -dy; // screen down → game negative Y (falling)
+
+        var len = Math.sqrt(worldDirX * worldDirX + worldDirY * worldDirY) || 1;
+        var ndx = worldDirX / len;
+        var ndy = worldDirY / len;
 
         var speed = 32 * 14;
-
         var pIdx = portalNextIndex;
         portalNextIndex = 1 - portalNextIndex;
 
-        // Start position: Mario center in world coords
+        // Start at Mario center
         var sx = mario.position.x + mario.body.width / 2 - 5;
         var sy = mario.position.y + mario.body.height / 2 - 5;
 
-        var bullet = createBullet(
-            { x: sx, y: sy },
-            dx, -dy, // dy inverted because game Y is bottom-up
-            speed,
-            pIdx,
-            mario.layer
-        );
-
+        var bullet = createBullet(sx, sy, ndx, ndy, speed, pIdx, mario.layer);
         mario.layer.addObject(bullet);
-
-        // Create aim overlay if not yet added
-        createAimOverlay(mario.layer);
+        ensureAimOverlay(mario.layer);
     }
 
-    // Hook reload/loadLevel to reset portal state
+    // ───── Hooks ─────
     function hookGameManager() {
         if (!window.gameManager) return;
 
@@ -284,6 +272,7 @@
         window.gameManager.reload = function () {
             portals = [null, null];
             portalNextIndex = 0;
+            aimOverlay = null;
             origReload();
         };
 
@@ -296,7 +285,7 @@
         };
     }
 
-    // E key or left mouse button fires portal
+    // ───── Input ─────
     document.addEventListener('keydown', function (e) {
         if (e.code !== 'KeyE' || e.repeat) return;
         if (window.game && window.game.paused) return;
@@ -304,25 +293,21 @@
     });
 
     document.addEventListener('mousedown', function (e) {
-        if (e.button !== 0) return; // left click
+        if (e.button !== 0) return;
         if (window.game && window.game.paused) return;
-        // Don't fire if clicking on UI elements outside canvas
         var c = getCanvas();
         if (!c) return;
         var rect = c.getBoundingClientRect();
         if (e.clientX < rect.left || e.clientX > rect.right ||
-            e.clientY < rect.top || e.clientY > rect.bottom) return;
+            e.clientY < rect.top  || e.clientY > rect.bottom) return;
         firePortal();
     });
 
     if (window.gameManager) {
         hookGameManager();
     } else {
-        var waitTimer = setInterval(function () {
-            if (window.gameManager) {
-                clearInterval(waitTimer);
-                hookGameManager();
-            }
+        var t = setInterval(function () {
+            if (window.gameManager) { clearInterval(t); hookGameManager(); }
         }, 100);
     }
 })();

@@ -313,66 +313,111 @@
 })();
 
 
-// ───── Viewport culling (one-time patch, zero per-frame overhead) ─────
+// ───── Performance: spatial culling for collision + render ─────
 (function() {
+    var CULL_X = 1280 + 256; // px left/right of camera center to include in collision
+    var RENDER_MARGIN = 128;
     var CANVAS_W = 1280;
-    var MARGIN = 128;
 
-    function isVisible(obj) {
-        if (!obj.position || !obj.body) return true;
-        var sx = obj.position.x + window.camera.x;
-        return sx + obj.body.width + MARGIN > 0 && sx - MARGIN < CANVAS_W;
+    function getCameraCenter() {
+        return window.camera ? -window.camera.x + CANVAS_W / 2 : 640;
     }
 
+    // Wrap a layer with spatial filtering
+    function patchLayer(layer) {
+        if (!layer || layer._spatialPatched) return;
+        layer._spatialPatched = true;
+
+        // Store real objects array
+        var _objects = layer.objects;
+
+        // Replace objects property with a getter
+        Object.defineProperty(layer, 'objects', {
+            get: function() {
+                // During collision detection phase we return only nearby objects.
+                // We detect we're "in collision phase" via a flag set by process patch.
+                if (window._inCollisionPhase) {
+                    var cx = getCameraCenter();
+                    var lo = cx - CULL_X;
+                    var hi = cx + CULL_X;
+                    return _objects.filter(function(o) {
+                        if (!o.position) return true; // always include non-positioned
+                        var ox = o.position.x;
+                        return ox + (o.body ? o.body.width : 32) > lo && ox < hi;
+                    });
+                }
+                return _objects;
+            },
+            set: function(v) { _objects = v; },
+            configurable: true
+        });
+
+        // Patch addObject / deleteObject to work on _objects
+        layer.addObject = function(obj) {
+            obj.layer = this;
+            _objects.push(obj);
+            // Wrap render for viewport culling
+            wrapRender(obj);
+            return this;
+        };
+        layer.deleteObject = function(obj) {
+            _objects = _objects.filter(function(o) { return o !== obj; });
+        };
+    }
+
+    // Lightweight render culling
     function wrapRender(obj) {
         if (!obj || typeof obj.render !== 'function' || obj._cullWrapped) return;
+        if (!obj.position || !obj.body) return; // skip overlays/non-positioned
         obj._cullWrapped = true;
         var orig = obj.render;
         obj.render = function(ctx) {
-            if (isVisible(this)) orig.call(this, ctx);
+            var sx = this.position.x + window.camera.x;
+            if (sx + this.body.width + RENDER_MARGIN > 0 && sx - RENDER_MARGIN < CANVAS_W) {
+                orig.call(this, ctx);
+            }
         };
     }
 
-    function patchLayer(layer) {
-        if (!layer || layer._cullPatched) return;
-        layer._cullPatched = true;
-        // Wrap existing objects
-        layer.objects.forEach(wrapRender);
-        // Wrap future objects
-        var origAdd = layer.addObject;
-        layer.addObject = function(obj) {
-            var r = origAdd.call(this, obj);
-            wrapRender(obj);
-            return r;
+    // Patch game.process to set _inCollisionPhase flag during collision loop
+    function patchProcess() {
+        if (!window.game || !window.game.process) return;
+        var origProcess = window.game.process;
+        window.game.process = function() {
+            window._inCollisionPhase = true;
+            origProcess.apply(this, arguments);
+            window._inCollisionPhase = false;
         };
+        // Also set false after each layer's collision — process calls render too
+        // Actually the flag approach is coarse but works: collision+render both filtered
+        // Render filtering handled separately by wrapRender, so collision filter is the win
     }
 
-    function patchGame() {
+    function patchAllLayers() {
         if (!window.game || !window.game.layers) return;
         window.game.layers.forEach(patchLayer);
-        // Patch layers.push for future layers
         var origPush = window.game.layers.push;
         window.game.layers.push = function(layer) {
             var r = origPush.apply(this, arguments);
             patchLayer(layer);
             return r;
         };
+        patchProcess();
     }
 
-    // Also re-patch after level reload (layers get recreated)
     function hookReload() {
         if (!window.gameManager) return;
         var origLoad = window.gameManager.loadLevel;
         window.gameManager.loadLevel = function() {
             var r = origLoad.apply(this, arguments);
-            setTimeout(patchGame, 50);
+            setTimeout(patchAllLayers, 50);
             return r;
         };
     }
 
     function init() {
         if (window.game && window.game.layers && window.gameManager) {
-            patchGame();
+            patchAllLayers();
             hookReload();
         } else {
             setTimeout(init, 100);
